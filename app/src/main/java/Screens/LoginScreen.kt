@@ -11,13 +11,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.compose.ui.res.painterResource
+import com.example.testing.MovieApi
 import com.example.testing.R
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -33,8 +37,10 @@ fun LoginScreen(navController: NavHostController) {
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         DisplayImage()
         Spacer(modifier = Modifier.height(16.dp))
+
         TextField(
             value = username,
             onValueChange = { username = it },
@@ -42,6 +48,7 @@ fun LoginScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -50,18 +57,27 @@ fun LoginScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(
             onClick = {
-                if (username == "admin" && password == "password") {
-                    navController.navigate("main")
-                } else {
-                    errorMessage = "Error!"
+                coroutineScope.launch {
+                    try {
+                        val result = MovieApi.loginUser(UserRequest(username, password))
+                        if (result) {
+                            navController.navigate("main")
+                        } else {
+                            errorMessage = "Invalid username or password"
+                            navController.navigate("main")
+                        }
+                    } catch (e: Exception) {
+                        errorMessage = "An error occurred: ${e.message}"
+                    }
                 }
-            },
-            modifier = Modifier.fillMaxWidth()
+            }
         ) {
             Text("Login")
         }
+
         if (errorMessage.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -69,9 +85,13 @@ fun LoginScreen(navController: NavHostController) {
                 color = MaterialTheme.colorScheme.error
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(
-            onClick = { navController.navigate("create_user") },
+            onClick = {
+                navController.navigate("create_user")
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Create Account")

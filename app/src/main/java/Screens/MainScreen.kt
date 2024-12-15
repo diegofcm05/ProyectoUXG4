@@ -11,14 +11,15 @@ import androidx.compose.ui.Modifier
 import Screens.HomeScreen
 import Screens.SearchScreen
 import Screens.FavoriteScreen
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavHostController
 
 @Composable
-fun MainScreen(navController: NavHostController) {
-    var selectedScreen by remember { mutableStateOf("Home") }
+fun MainScreen(navController: NavHostController, username: String) {
+    var selectedScreen by rememberSaveable { mutableStateOf("Home") }
 
     Scaffold(
-        topBar = { TopNavBar(navController) },
+        topBar = { TopNavBar(navController, selectedScreen) },
         bottomBar = { BottomNavBar(selectedScreen) { selectedScreen = it } }
     ) { paddingValues ->
         Box(
@@ -29,7 +30,7 @@ fun MainScreen(navController: NavHostController) {
             when (selectedScreen) {
                 "Search" -> SearchScreen(navController)
                 "Home" -> HomeScreen(navController)
-                "Favorites" -> FavoriteScreen(navController)
+                "Favorites" -> FavoriteScreen(navController, username)
             }
         }
     }
@@ -44,21 +45,21 @@ fun BottomNavBar(
         containerColor = MaterialTheme.colorScheme.primary
     ) {
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            icon = { Icon(Icons.Default.Search, contentDescription = "Navigate to Search Screen") },
             label = { Text("Search") },
             selected = currentScreen == "Search",
             onClick = { onScreenSelected("Search") }
         )
 
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+            icon = { Icon(Icons.Default.Home, contentDescription = "Navigate to Home Screen") },
             label = { Text("Home") },
             selected = currentScreen == "Home",
             onClick = { onScreenSelected("Home") }
         )
 
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+            icon = { Icon(Icons.Default.Favorite, contentDescription = "Navigate to Favorites Screen") },
             label = { Text("Favorites") },
             selected = currentScreen == "Favorites",
             onClick = { onScreenSelected("Favorites") }
@@ -68,9 +69,16 @@ fun BottomNavBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopNavBar(navController: NavHostController) {
+fun TopNavBar(navController: NavHostController, currentScreen: String) {
+    fun getScreenTitle(screen: String): String = when (screen) {
+        "Search" -> "Search Movies"
+        "Home" -> "Home"
+        "Favorites" -> "Your Favorites"
+        else -> "Cinemaddicts"
+    }
+
     TopAppBar(
-        title = { Text("Cinemaddicts") },
+        title = { Text(getScreenTitle(currentScreen)) },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary,
             titleContentColor = MaterialTheme.colorScheme.onPrimary
