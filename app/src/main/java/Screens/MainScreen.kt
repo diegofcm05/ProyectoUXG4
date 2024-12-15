@@ -30,7 +30,7 @@ fun MainScreen(navController: NavHostController, username: String) {
             when (selectedScreen) {
                 "Search" -> SearchScreen(navController)
                 "Home" -> HomeScreen(navController)
-                "Favorites" -> FavoriteScreen(navController, username)
+                "Favorites" -> FavoriteScreen(navController)
             }
         }
     }

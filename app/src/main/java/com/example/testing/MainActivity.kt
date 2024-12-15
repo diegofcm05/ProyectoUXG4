@@ -42,6 +42,12 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,26 +96,57 @@ fun NetflixTheme(content: @Composable () -> Unit) {
     )
 }
 
+@Serializable
+data class TmdbResponse(
+    val results: List<MovieResult>
+)
+
+@Serializable
 data class MovieResult(
     val id: Int,
     val title: String,
     val overview: String?,
-    val poster_path: String?,
-    val release_date: String?,
-    val vote_average: Double?,
-    val vote_count: Int?,
+    @SerialName("poster_path") val posterPath: String?,
+    @SerialName("release_date") val releaseDate: String?,
+    @SerialName("vote_average") val voteAverage: Double?,
+    @SerialName("vote_count") val voteCount: Int?,
     val popularity: Double?
 )
 
+@Serializable
 data class MovieDetails(
     val id: Int,
     val title: String,
     val overview: String?,
-    val poster_path: String?,
-    val release_date: String?,
-    val vote_average: Double?,
+    @SerialName("poster_path") val posterPath: String?,
+    @SerialName("release_date") val releaseDate: String?,
+    @SerialName("vote_average") val voteAverage: Double?,
+    @SerialName("vote_count") val voteCount: Int?,
+    val popularity: Double?,
     val runtime: Int?,
-    val genres: List<String>?
+    val genres: List<Genre>?,
+    val homepage: String?,
+    val tagline: String?
+)
+
+@Serializable
+data class Genre(
+    val id: Int,
+    val name: String
+)
+
+@Serializable
+data class VideoResponse(
+    val results: List<VideoResult>
+)
+
+@Serializable
+data class VideoResult(
+    val id: String,
+    val key: String,
+    val name: String,
+    val site: String,
+    val type: String
 )
 
 @Composable
@@ -151,45 +188,69 @@ data class UserRequest(val username: String, val password: String)
 
 
 object MovieApi {
-    private const val BASE_URL = "https://a202-190-92-11-185.ngrok-free.app"
+    private const val BASE_URL = "http://10.0.2.2:8080"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
-            json()
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    coerceInputValues = true
+                }
+            )
         }
-        install(io.ktor.client.plugins.logging.Logging) {
-            level = io.ktor.client.plugins.logging.LogLevel.ALL
+        install(Logging) {
+            level = LogLevel.ALL
         }
     }
 
     suspend fun registerUser(request: UserRequest): Boolean {
-        try {
-            val response = client.post("$BASE_URL/register") {
+        return try {
+            val response: HttpResponse = client.post("$BASE_URL/register") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            println("Register Response: $response")
-            return response.body()
+
+            val responseText = response.bodyAsText()
+            println("Register Response: $responseText")
+
+            val json = Json.decodeFromString<Map<String, Boolean>>(responseText)
+            val success = json["success"] ?: false
+
+            println("Register Success: $success")
+            success
         } catch (e: Exception) {
             println("Register Error: ${e.message}")
-            throw e
+            false
         }
     }
+
+    @Serializable
+    data class LoginResponse(
+        val success: Boolean,
+        val message: String
+    )
 
     suspend fun loginUser(request: UserRequest): Boolean {
         return try {
             println("Sending Login Request: $request")
-            val response = client.post("$BASE_URL/login") {
+
+            val response: HttpResponse = client.post("$BASE_URL/login") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
 
-            println("Response Status: ${response.status}")
-            val responseBody = response.body<String>()
-            println("Response Body: $responseBody")
+            val responseText = response.bodyAsText()
+            println("Response Body: $responseText")
 
+            val loginResponse = Json.decodeFromString<LoginResponse>(responseText)
+            println("Login Success: ${loginResponse.success}, Message: ${loginResponse.message}")
 
-            responseBody.contains("true")
+            if (!loginResponse.success) {
+                println("Login Failed: ${loginResponse.message}")
+            }
+
+            loginResponse.success
         } catch (e: Exception) {
             println("Error during login: ${e.message}")
             false
@@ -208,35 +269,69 @@ object MovieApi {
         }.body()
     }
 
-    suspend fun addMovieToUser(username: String, movie: Movie): Boolean {
-        return client.post("$BASE_URL/user/$username/movie") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-            setBody(movie)
-        }.body()
+    suspend fun getFavoriteMovies(username: String): List<MovieResult> {
+        return try {
+            val response = client.get("$BASE_URL/user/$username/favorites") {
+                contentType(ContentType.Application.Json)
+            }
+            response.body()
+        } catch (e: Exception) {
+            println("Error fetching favorites: ${e.message}")
+            emptyList()
+        }
     }
 
-    suspend fun removeMovieFromUser(username: String, movieId: Int): Boolean {
-        return client.delete("$BASE_URL/user/$username/movie/$movieId") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun addFavoriteMovie(username: String, movie: MovieResult): Boolean {
+        return try {
+            val response = client.post("$BASE_URL/user/$username/movie") {
+                contentType(ContentType.Application.Json)
+                setBody(movie)
+            }
+            response.body<Map<String, Boolean>>()["success"] ?: false
+        } catch (e: Exception) {
+            println("Error adding favorite: ${e.message}")
+            false
+        }
     }
 
-    suspend fun getFavoriteMovies(username: String): List<Movie> {
-        return client.get("$BASE_URL/user/$username/favorites") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun removeFavoriteMovie(username: String, movieId: Int): Boolean {
+        return try {
+            val response = client.delete("$BASE_URL/user/$username/movie/$movieId") {
+                contentType(ContentType.Application.Json)
+            }
+            response.body<Map<String, Boolean>>()["success"] ?: false
+        } catch (e: Exception) {
+            println("Error removing favorite: ${e.message}")
+            false
+        }
     }
 
-    suspend fun getPopularMovies(): List<Movie> {
-        return client.get("$BASE_URL/movies/popular") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getPopularMovies(): List<MovieResult> {
+        return try {
+            println("Fetching Popular Movies...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/movies/popular") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Popular Movies Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching popular movies: ${e.message}")
+            emptyList()
+        }
     }
 
-    suspend fun getTopRatedMovies(): List<Movie> {
-        return client.get("$BASE_URL/movies/top_rated") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getTopRatedMovies(): List<MovieResult> {
+        return try {
+            println("Fetching Top Rated Movies...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/movies/top_rated") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Top Rated Movies Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching top rated movies: ${e.message}")
+            emptyList()
+        }
     }
 
     suspend fun getUpcomingMovies(): List<Movie> {
@@ -263,10 +358,19 @@ object MovieApi {
         }.body()
     }
 
-    suspend fun getMovieDetails(movieId: Int): MovieDetails {
-        return client.get("$BASE_URL/movies/$movieId") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getMovieDetailsWithTrailers(movieId: Int): Pair<MovieDetails, List<VideoResult>> {
+        val responseText = client.get("$BASE_URL/movies/$movieId").bodyAsText()
+        println("Raw Response: $responseText")
+
+        return try {
+            val jsonObject = Json.parseToJsonElement(responseText).jsonObject
+            val movieDetails = Json.decodeFromJsonElement<MovieDetails>(jsonObject["details"]!!)
+            val trailers = Json.decodeFromJsonElement<List<VideoResult>>(jsonObject["trailers"]!!)
+            Pair(movieDetails, trailers)
+        } catch (e: Exception) {
+            println("Deserialization Error: ${e.message}")
+            throw e
+        }
     }
 }
 

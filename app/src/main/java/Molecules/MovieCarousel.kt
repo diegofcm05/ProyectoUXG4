@@ -12,6 +12,8 @@ import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun MovieCarousel(title: String, movies: List<Pair<String, String?>>) {
+    println("Rendering MovieCarousel: $title with ${movies.size} movies")
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -34,6 +36,7 @@ fun MovieCarousel(title: String, movies: List<Pair<String, String?>>) {
         ) {
             items(movies.size) { index ->
                 val movie = movies[index]
+                println("Displaying Movie: ${movie.second}") // Log movie title
                 MovieCard(imageUrl = movie.first, title = movie.second)
             }
         }

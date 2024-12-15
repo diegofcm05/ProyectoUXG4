@@ -70,8 +70,9 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:2.3.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-    implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("androidx.compose.foundation:foundation:1.4.0")
     implementation("io.ktor:ktor-client-logging:2.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-okio:1.6.0")
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
 }

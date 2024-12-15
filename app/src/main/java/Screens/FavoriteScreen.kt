@@ -25,21 +25,25 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import com.example.testing.MovieResult
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
+
 
 @Composable
-fun FavoriteScreen(navController: NavHostController, username: String) {
+fun FavoriteScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
-    var favoriteMovies by remember { mutableStateOf(emptyList<Pair<String, String?>>()) }
+    var favoriteMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-                val favoritesResponse = MovieApi.getFavoriteMovies(username)
-                favoriteMovies = favoritesResponse.map { movie ->
-                    Pair("https://image.tmdb.org/t/p/w500${movie.id}.jpg", movie.nombre)
-                }
+                favoriteMovies = MovieApi.getFavoriteMovies("yourUsernameHere") // Replace with dynamic username
             } catch (e: Exception) {
-                e.printStackTrace()
+                errorMessage = "Failed to load favorite movies: ${e.message}"
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -52,24 +56,26 @@ fun FavoriteScreen(navController: NavHostController, username: String) {
         verticalArrangement = Arrangement.Top
     ) {
         Text(
-            text = "Favorites",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
+            text = "Your Favorite Movies",
+            style = MaterialTheme.typography.headlineLarge
         )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        if (favoriteMovies.isNotEmpty()) {
-            MovieCarousel(title = "Your Favorite Movies", movies = favoriteMovies)
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No favorite movies found.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
+            errorMessage?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+            }
+
+            if (favoriteMovies.isNotEmpty()) {
+                MovieCarousel(
+                    title = "Favorite Movies",
+                    movies = favoriteMovies,
+                    navController = navController
                 )
+            } else {
+                Text("No favorite movies available.", style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -20,6 +21,7 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) } // Loading indicator
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -60,29 +62,49 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
 
         Button(
             onClick = {
-                coroutineScope.launch {
-                    try {
-                        val result = MovieApi.loginUser(UserRequest(username, password))
-                        if (result) {
-                            navController.navigate("main")
-                        } else {
-                            errorMessage = "Invalid username or password"
-                            navController.navigate("main")
+                if (username.isNotEmpty() && password.isNotEmpty()) {
+                    errorMessage = ""
+                    isLoading = true
+                    coroutineScope.launch {
+                        try {
+                            val result = MovieApi.loginUser(UserRequest(username, password))
+                            if (result) {
+                                navController.navigate("main")
+                            } else {
+                                errorMessage = "Invalid username or password. Please try again."
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "An error occurred: ${e.message}"
+                        } finally {
+                            isLoading = false
                         }
-                    } catch (e: Exception) {
-                        errorMessage = "An error occurred: ${e.message}"
                     }
+                } else {
+                    errorMessage = "Username and password cannot be empty."
                 }
-            }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            enabled = !isLoading
         ) {
-            Text("Login")
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text("Login", color = Color.White)
+            }
         }
 
         if (errorMessage.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = errorMessage,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
 
@@ -92,9 +114,13 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
             onClick = {
                 navController.navigate("create_user")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            enabled = !isLoading
         ) {
-            Text("Create Account")
+            Text("Create Account", color = Color.White)
         }
     }
 }

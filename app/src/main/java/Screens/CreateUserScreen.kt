@@ -57,7 +57,7 @@ fun CreateUserScreen(navController: NavHostController) {
         Button(
             onClick = {
                 if (username.isNotEmpty() && password.isNotEmpty()) {
-                    isLoading = true // Show loading state
+                    isLoading = true
                     coroutineScope.launch {
                         try {
                             val registerRequest = UserRequest(username = username, password = password)
@@ -94,7 +94,7 @@ fun CreateUserScreen(navController: NavHostController) {
         Button(
             onClick = { navController.navigate("login") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading // Disable button while loading
+            enabled = !isLoading
         ) {
             Text("Back")
         }
