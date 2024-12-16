@@ -37,6 +37,9 @@ fun SearchScreen(navController: NavHostController) {
     var filteredMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
     var popularMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
     var topRatedMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var animeMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var upcomingMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var nowPlayingMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
     var searchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -46,8 +49,13 @@ fun SearchScreen(navController: NavHostController) {
             try {
                 popularMovies = MovieApi.getPopularMovies()
                 topRatedMovies = MovieApi.getTopRatedMovies()
+                animeMovies = MovieApi.getAnimeMovies()
+                upcomingMovies = MovieApi.getUpcomingMovies()
+                nowPlayingMovies = MovieApi.getNowPlayingMovies()
+
+
                 isLoading = true
-                allMovies = popularMovies + topRatedMovies
+                allMovies = popularMovies + topRatedMovies + animeMovies + upcomingMovies + nowPlayingMovies
                 filteredMovies = allMovies
             } catch (e: Exception) {
                 errorMessage = "Failed to load movies: ${e.message}"

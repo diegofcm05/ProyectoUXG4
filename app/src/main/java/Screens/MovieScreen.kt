@@ -41,7 +41,7 @@ fun MovieScreen(navController: NavHostController, movieId: Int, username: String
         coroutineScope.launch {
             try {
                 println("Fetching Movie Details...")
-                val movies = MovieApi.getPopularMovies() + MovieApi.getTopRatedMovies()
+                val movies = MovieApi.getPopularMovies() + MovieApi.getTopRatedMovies() + MovieApi.getAnimeMovies()
                 movieResult = movies.firstOrNull { it.id == movieId }
             } catch (e: Exception) {
                 errorMessage = "Error fetching movie details: ${e.message}"

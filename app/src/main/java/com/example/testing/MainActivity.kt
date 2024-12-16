@@ -334,28 +334,60 @@ object MovieApi {
         }
     }
 
-    suspend fun getUpcomingMovies(): List<Movie> {
-        return client.get("$BASE_URL/movies/upcoming") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getUpcomingMovies(): List<MovieResult> {
+        return try {
+            println("Fetching Upcoming Movies...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/movies/upcoming") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Upcoming Movies Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching upcoming movies: ${e.message}")
+            emptyList()
+        }
     }
 
-    suspend fun getNowPlayingMovies(): List<Movie> {
-        return client.get("$BASE_URL/movies/now_playing") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getNowPlayingMovies(): List<MovieResult> {
+        return try {
+            println("Fetching Now Playing Movies...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/movies/now_playing") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Now Playing Movies Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching now playing movies: ${e.message}")
+            emptyList()
+        }
     }
 
-    suspend fun getAnimeMovies(): List<Movie> {
-        return client.get("$BASE_URL/movies/anime") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getAnimeMovies(): List<MovieResult> {
+        return try {
+            println("Fetching Anime Movies...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/movies/anime") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Anime Movies Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching anime movies: ${e.message}")
+            emptyList()
+        }
     }
 
-    suspend fun getAnimeTvShows(): List<Movie> {
-        return client.get("$BASE_URL/tv/anime") {
-            contentType(io.ktor.http.ContentType.Application.Json)
-        }.body()
+    suspend fun getAnimeTvShows(): List<MovieResult> {
+        return try {
+            println("Fetching Anime TV Shows...")
+            val movies: List<MovieResult> = client.get("$BASE_URL/tv/anime") {
+                contentType(ContentType.Application.Json)
+            }.body()
+            println("Anime TV Shows Received: $movies")
+            movies
+        } catch (e: Exception) {
+            println("Error fetching anime TV shows: ${e.message}")
+            emptyList()
+        }
     }
 
     suspend fun getMovieDetailsWithTrailers(movieId: Int): Pair<MovieDetails, List<VideoResult>> {

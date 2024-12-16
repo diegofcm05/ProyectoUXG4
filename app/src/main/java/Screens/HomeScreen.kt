@@ -3,6 +3,7 @@ package Screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -11,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +33,9 @@ fun HomeScreen(navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope()
     var popularMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
     var topRatedMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var animeMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var upcomingMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
+    var nowPlayingMovies by remember { mutableStateOf(emptyList<MovieResult>()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -38,6 +44,9 @@ fun HomeScreen(navController: NavHostController) {
             try {
                 popularMovies = MovieApi.getPopularMovies()
                 topRatedMovies = MovieApi.getTopRatedMovies()
+                animeMovies = MovieApi.getAnimeMovies()
+                upcomingMovies = MovieApi.getUpcomingMovies()
+                nowPlayingMovies = MovieApi.getNowPlayingMovies()
             } catch (e: Exception) {
                 errorMessage = "Failed to load movies: ${e.message}"
             } finally {
@@ -49,7 +58,8 @@ fun HomeScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
@@ -63,7 +73,6 @@ fun HomeScreen(navController: NavHostController) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             errorMessage?.let {
-
                 Text(text = it, color = MaterialTheme.colorScheme.error)
             }
 
@@ -80,6 +89,33 @@ fun HomeScreen(navController: NavHostController) {
             } else {
                 Text("No top-rated movies available.", style = MaterialTheme.typography.bodyLarge)
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (animeMovies.isNotEmpty()) {
+                MovieCarousel(title = "Animated Movies", movies = animeMovies, navController = navController)
+            } else {
+                Text("No animated movies available.", style = MaterialTheme.typography.bodyLarge)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (upcomingMovies.isNotEmpty()) {
+                MovieCarousel(title = "Upcoming Movies", movies = upcomingMovies, navController = navController)
+            } else {
+                Text("No upcoming movies available.", style = MaterialTheme.typography.bodyLarge)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (nowPlayingMovies.isNotEmpty()) {
+                MovieCarousel(title = "Now Playing Movies", movies = nowPlayingMovies, navController = navController)
+            } else {
+                Text("No now playing movies available.", style = MaterialTheme.typography.bodyLarge)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
         }
     }
 }

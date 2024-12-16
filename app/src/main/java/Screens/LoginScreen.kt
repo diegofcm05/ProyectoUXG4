@@ -21,7 +21,7 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) } // Loading indicator
+    var isLoading by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
